@@ -1,5 +1,3 @@
-from http.cookiejar import UTC_ZONES
-
 import discord
 from datetime import datetime, timezone
 import asyncio
