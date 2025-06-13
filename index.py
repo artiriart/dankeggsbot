@@ -62,7 +62,8 @@ def create_eggs_bot():
         ):
             channel_tosend = bot.get_channel(main_channelid)
             actionrow, embed = await createinvite(message)
-            if datetime.now(timezone.utc).weekday() == 2 or 6:
+            day=datetime.now(timezone.utc).weekday()
+            if day == 2 or day == 6:
                 ping_content=f"Eggs drop <@&{main_doublepingroleid}>"
             else:
                 ping_content=f"Eggs drop <@&{main_pingroleid}>"
