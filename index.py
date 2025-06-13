@@ -3,6 +3,10 @@ from datetime import datetime, timezone
 import asyncio
 import json
 
+# CHANGE YOUR VARIABLES HERE:
+main_guildid=1349398262322429952
+main_channelid=1376603711891050619
+
 # Load tokens from tokens.json
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
@@ -52,9 +56,9 @@ def create_eggs_bot():
             message.embeds and
             message.embeds[0].description and
             message.embeds[0].description.startswith("> Aw man, I dropped something in my eggs again.") and
-            message.guild and message.guild.id != 1349398262322429952
+            message.guild and message.guild.id != main_guildid
         ):
-            channel_tosend = bot.get_channel(1376603711891050619)
+            channel_tosend = bot.get_channel(main_channelid)
             actionrow, embed = await createinvite(message)
             await channel_tosend.send(embed=embed, view=actionrow)
 
@@ -64,7 +68,7 @@ def create_eggs_bot():
             message.embeds and
             message.embeds[0].description and
             message.embeds[0].description.startswith("> You typed") and
-            message.guild and message.guild.id != 1349398262322429952
+            message.guild and message.guild.id != main_guildid
         ):
             invites = await message.channel.invites()
             for invite in invites:
