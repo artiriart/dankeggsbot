@@ -14,13 +14,13 @@ git clone https://github.com/artiriart/dankeggsbot.git
 
 ```bash
 # cd /dankeggsbot
-pip install -r requirements.txt
+pip install -r requirements.txt # Packages used: discord,discord.py
 ```
 
 3. Create a file named "tokens.json" which consists of a List of Tokens
 
 ```bash
-echo [] >> tokens.json
+echo [] > tokens.json
 ```
 
 4. Adjust the Variables inside index.py
