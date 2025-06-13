@@ -1,3 +1,5 @@
+from http.cookiejar import UTC_ZONES
+
 import discord
 from datetime import datetime, timezone
 import asyncio
@@ -6,6 +8,8 @@ import json
 # CHANGE YOUR VARIABLES HERE:
 main_guildid=1349398262322429952
 main_channelid=1376603711891050619
+main_pingroleid=2
+main_doublepingroleid=1
 
 # Load tokens from tokens.json
 with open("tokens.json", "r") as f:
@@ -60,7 +64,11 @@ def create_eggs_bot():
         ):
             channel_tosend = bot.get_channel(main_channelid)
             actionrow, embed = await createinvite(message)
-            await channel_tosend.send(embed=embed, view=actionrow)
+            if datetime.now(timezone.utc).weekday() == 2 or 6:
+                ping_content=f"Eggs drop <@&{main_doublepingroleid}>"
+            else:
+                ping_content=f"Eggs drop <@&{main_pingroleid}>"
+            await channel_tosend.send(embed=embed, view=actionrow, content=ping_content)
 
     async def check_eggseventdone(message):
         if (
