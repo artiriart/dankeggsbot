@@ -1,4 +1,4 @@
-## Dank Memer minimal Eggs Event "Forwarder"
+## Dank Memer minimal Eggs Events Bot/s
 
 ---
 
