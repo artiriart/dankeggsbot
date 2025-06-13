@@ -14,7 +14,7 @@ dank_userid = 270904126974590976
 def create_eggs_bot():
     intents = discord.Intents.default()
     intents.message_content = True
-    bot = discord.Client(intents=intents)
+    bot = discord.Client(intents=intents, max_messages=0)
 
     @bot.event
     async def on_ready():
