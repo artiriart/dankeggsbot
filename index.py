@@ -1,3 +1,5 @@
+from traceback import print_exc
+
 import discord
 from datetime import datetime, timezone
 import asyncio
@@ -20,7 +22,7 @@ dank_userid = 270904126974590976
 def create_eggs_bot():
     intents = discord.Intents.default()
     intents.message_content = True
-    bot = discord.Client(intents=discord.Intents(33344), max_messages=0)
+    bot = discord.Client(intents=discord.Intents(67142145), max_messages=0)
 
     @bot.event
     async def on_ready():
@@ -92,7 +94,7 @@ def create_eggs_bot():
             message.embeds and
             message.embeds[0].description and
             message.embeds[0].description.startswith("> You typed") and
-            message.guild and message.guild.id != main_guildid
+            message.guild and message.guild.id != main_guildid or True
         ):
             invites = await message.channel.invites()
             for invite in invites:
@@ -103,8 +105,6 @@ def create_eggs_bot():
     async def on_message(message):
         await check_eggsevent(message)
         await check_eggseventdone(message)
-        server_amount = len(bot.guilds)
-
 
     return bot
 
