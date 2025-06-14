@@ -24,7 +24,24 @@ def create_eggs_bot():
 
     @bot.event
     async def on_ready():
-        print(f'Your Eggs bot is up for egg hunting! Name: {bot.user}')
+        print(f'Bot up. Name: {bot.user}\n---')
+        await bot.loop.create_task(update_presence())
+
+    async def update_presence():
+        """Update bot presence every 5 minutes"""
+        await bot.wait_until_ready()
+        while not bot.is_closed():
+            try:
+                server_amount = len(bot.guilds)
+                await bot.change_presence(
+                    activity=discord.Activity(
+                        type=discord.ActivityType.playing,
+                        name=f"with {server_amount} Servers"
+                    )
+                )
+            finally:
+                pass
+            await asyncio.sleep(300)
 
     async def createinvite(message):
         guild = message.guild
@@ -86,6 +103,8 @@ def create_eggs_bot():
     async def on_message(message):
         await check_eggsevent(message)
         await check_eggseventdone(message)
+        server_amount = len(bot.guilds)
+
 
     return bot
 
