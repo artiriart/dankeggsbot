@@ -43,7 +43,7 @@ def create_eggs_bot():
                 )
             finally:
                 pass
-            await asyncio.sleep(300)
+            await asyncio.sleep(3600)
 
     async def createinvite(message):
         guild = message.guild
