@@ -1,5 +1,7 @@
 ## Dank Memer minimal Eggs Events Bot/s
 
+###### Minimal ressource hungry discord.py script
+
 ---
 
 ### How to setup:
@@ -25,7 +27,7 @@ echo [] > tokens.json
 
 4. Adjust the Variables inside index.py
 ```bash
-nano index.py # line 7+8 need editing
+nano index.py # a few lines need editing (inserting ID's)
 ```
 
 5. Run the Bot/s
