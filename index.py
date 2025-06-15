@@ -179,15 +179,14 @@ def create_eggs_bot():
 
                     if message.embeds and len(message.embeds) > 0:
                         data = message.embeds[0].description
-                        timestamp_start = data.find("<t:") + 3
-                        timestamp_end = data.find(":R>")
+                        timestamp = int(data[data.find("<t:") + 3:data.find(":R>")])
+                        current_time = int(datetime.now(timezone.utc).timestamp())
 
-                        if timestamp_start > 2 and timestamp_end > timestamp_start:
-                            timestamp = int(data[timestamp_start:timestamp_end])
-                            current_time = int(datetime.now(timezone.utc).timestamp())
-                            time_dif = max(300 - (current_time - timestamp), 60)
-                        else:
-                            time_dif = 300
+                        if timestamp < current_time:
+                            await interaction.followup.send("Outdated Event.", ephemeral=True)
+                            return
+
+                        time_dif = timestamp - current_time
 
                         if channel:
                             invite = await channel.create_invite(max_age=time_dif, max_uses=5,
@@ -201,8 +200,6 @@ def create_eggs_bot():
                         else:
                             await interaction.followup.send("Guild not found or I am no longer in that server.",
                                                             ephemeral=True)
-                    else:
-                        await interaction.followup.send("Unable to process the request.", ephemeral=True)
                 except Exception as e:
                     print(f"Error handling interaction: {e}")
                     await interaction.followup.send("An error occurred while creating the invite.", ephemeral=True)
