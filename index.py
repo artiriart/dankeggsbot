@@ -50,7 +50,7 @@ def create_eggs_bot():
 
     async def createinvite(message):
         guild = message.guild
-        ownerid = guild.owner_id
+        ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
 
         try:
             invite = await message.channel.create_invite(max_age=300, reason="Eggs Invitation", max_uses=1)
@@ -103,7 +103,7 @@ def create_eggs_bot():
                  message.guild and message.guild.id != main_guildid)
         ):
             guild = message.guild
-            ownerid = guild.owner_id
+            ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
             channel_tosend = bot.get_channel(main_channelid)
 
