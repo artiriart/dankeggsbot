@@ -50,7 +50,7 @@ def create_eggs_bot():
         owner = guild.owner_id
         owner_user = await bot.fetch_user(owner)
         owner_username = owner_user.name
-        invite = await message.channel.create_invite(max_age=300, reason="Eggs Invitation")
+        invite = await message.channel.create_invite(max_age=300, reason="Eggs Invitation", max_uses=1)
         message_url = message.jump_url
         expiring_time = int(datetime.now(timezone.utc).timestamp() + 300)
 
@@ -88,23 +88,9 @@ def create_eggs_bot():
                 ping_content=f"Eggs drop <@&{main_pingroleid}>"
             await channel_tosend.send(embed=embed, view=actionrow, content=ping_content)
 
-    async def check_eggseventdone(message):
-        if (
-            message.author.id == dank_userid and
-            message.embeds and
-            message.embeds[0].description and
-            message.embeds[0].description.startswith("> You typed") and
-            message.guild and message.guild.id != main_guildid or True
-        ):
-            invites = await message.channel.invites()
-            for invite in invites:
-                if invite.inviter.id == bot.user.id:
-                    await invite.delete(reason="Eggs Event over!")
-
     @bot.event
     async def on_message(message):
         await check_eggsevent(message)
-        await check_eggseventdone(message)
 
     return bot
 
