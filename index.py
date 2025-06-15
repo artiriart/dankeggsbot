@@ -16,9 +16,9 @@ with open("tokens.json", "r") as f:
 # Dank Memer bot ID (hardcoded)
 dank_userid = 270904126974590976
 
+
 # Shared function to create a bot client with logic
 def create_eggs_bot():
-    # --- FIX: Intents setup clarified for better readability ---
     intents = discord.Intents.default()
     intents.guilds = True
     intents.guild_messages = True
@@ -50,103 +50,112 @@ def create_eggs_bot():
 
     async def createinvite(message):
         guild = message.guild
-        owner = guild.owner
-        owner_username = owner.name if owner else "Unknown Owner"
-        owner_id = owner.id if owner else "N/A"
+        ownerid = guild.owner_id
 
         try:
-            # Create an invite to the first available channel
             invite = await message.channel.create_invite(max_age=300, reason="Eggs Invitation", max_uses=1)
+            message_url = message.jump_url
+            expiring_time = int(datetime.now(timezone.utc).timestamp() + 300)
+
+            embed = discord.Embed(
+                title="Eggs Event Spawned!",
+                description=f"in {guild.name}, which is owned by <@{ownerid}>\n"
+                            f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
+                color=discord.Color.yellow(),
+            )
+            embed.set_thumbnail(url="https://i.imgur.com/g446CZj.gif")
+
+            view = discord.ui.View()
+            view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=invite.url))
+            view.add_item(discord.ui.Button(label="Message Link", style=discord.ButtonStyle.url, url=message_url))
+
+            return view, embed
         except discord.Forbidden:
-            return None, None  # Return None if bot can't create invite
-
-        message_url = message.jump_url
-        expiring_time = int(datetime.now(timezone.utc).timestamp() + 300)
-
-        embed = discord.Embed(
-            title="Eggs Event Spawned!",
-            description=f"in {guild.name}, which is owned by `{owner_username}` ({owner_id})\n"
-                        f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
-            color=discord.Color.yellow(),
-        )
-        embed.set_thumbnail(url="https://i.imgur.com/g446CZj.gif")
-
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=invite.url))
-        view.add_item(discord.ui.Button(label="Message Link", style=discord.ButtonStyle.url, url=message_url))
-
-        return view, embed
+            return None, None
+        except Exception:
+            return None, None
 
     async def check_eggsevent(message):
         if (
                 message.author.id == dank_userid and
                 message.embeds and
+                len(message.embeds) > 0 and
                 message.embeds[0].description and
                 message.embeds[0].description.startswith("> Aw man, I dropped something in my eggs again.") and
                 message.guild and message.guild.id != main_guildid
         ):
             channel_tosend = bot.get_channel(main_channelid)
-            view, embed = await createinvite(message)
-
-            if view and embed and channel_tosend:  # Check if invite/channel was found
-                day = datetime.now(timezone.utc).weekday()
-                ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
-                                                                                   6] else f"Eggs drop <@&{main_pingroleid}>"
-                await channel_tosend.send(embed=embed, view=view, content=ping_content)
+            if channel_tosend:
+                view, embed = await createinvite(message)
+                if view and embed:
+                    day = datetime.now(timezone.utc).weekday()
+                    ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
+                                                                                       6] else f"Eggs drop <@&{main_pingroleid}>"
+                    await channel_tosend.send(embed=embed, view=view, content=ping_content)
 
     async def check_bossevent(message):
         if (
-                message.author.id == dank_userid and
-                message.embeds and
-                message.embeds[0].description and
-                message.embeds[0].description.startswith("> OH SHIT A BOSS SPAWNED!") and
-                message.guild and message.guild.id != main_guildid
+                (message.author.id == dank_userid and
+                 message.embeds and
+                 len(message.embeds) > 0 and
+                 message.embeds[0].description and
+                 message.embeds[0].description.startswith("> OH SHIT A BOSS SPAWNED!") and
+                 message.guild and message.guild.id != main_guildid)
         ):
             guild = message.guild
-            owner = guild.owner
-            owner_username = owner.name if owner else "Unknown Owner"
-            owner_id = owner.id if owner else "N/A"
-            expiring_time = int(datetime.now(timezone.utc).timestamp() + 300)
+            ownerid = guild.owner_id
+            expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
             channel_tosend = bot.get_channel(main_channelid)
 
-            # --- FIX: Create a View instance before adding items ---
-            view = discord.ui.View()
-            view.add_item(discord.ui.Button(label="Generate Invite", custom_id=f"geninv-{message.guild.id}",
-                                            style=discord.ButtonStyle.success))
-
-            embed = discord.Embed(
-                title="Boss Event",
-                description=f"in {guild.name}, which is owned by `{owner_username}` ({owner_id})\n"
-                            f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
-                color=discord.Color.default(),
-            ).set_thumbnail(url="https://cdn.discordapp.com/emojis/1101064546812178506.png")
-
-            day = datetime.now(timezone.utc).weekday()
-            ping_content = "Boss drop on Double XP day" if day in [2, 6] else "Boss drop"
             if channel_tosend:
+                view = discord.ui.View()
+                view.add_item(discord.ui.Button(label="Generate Invite", custom_id=f"geninv-{message.channel.id}",
+                                                style=discord.ButtonStyle.success))
+
+                embed = discord.Embed(
+                    title="Boss Event",
+                    description=f"in {guild.name}, which is owned by <@{ownerid}>\n"
+                                f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
+                    color=discord.Color.default(),
+                )
+                embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1101064546812178506.png")
+
+                day = datetime.now(timezone.utc).weekday()
+                ping_content = "Boss drop on Double XP day" if day in [2, 6] else "Boss drop"
                 await channel_tosend.send(embed=embed, view=view, content=ping_content)
 
     async def handle_bossend(message):
         if (
                 message.author.id == dank_userid and
                 message.embeds and
+                len(message.embeds) > 0 and
                 message.embeds[0].description and
                 message.embeds[0].description.endswith("has been defeated!") and
                 message.guild and message.guild.id != main_guildid
         ):
-            rewards = message.embeds[0].fields[0].value.splitlines()
-            if rewards:
-                for reward in rewards:
-                    winner_id=reward[reward.find("<@")+2 : reward.find(">")]
-                    user=bot.get_user(winner_id)
-                    channel=user.dm_channel
-                    embed = discord.Embed(
-                        title="Boss Event",
-                        description="## Rewards:\n"+
-                                    reward
-                    )
-                    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/987157087693975612.png")
-                    await channel.send(embed=embed)
+            if len(message.embeds[0].fields) > 0:
+                rewards = message.embeds[0].fields[0].value.splitlines()
+                if rewards:
+                    for reward in rewards:
+                        try:
+                            winner_id_start = reward.find("<@") + 2
+                            winner_id_end = reward.find(">")
+                            if winner_id_start > 1 and winner_id_end > winner_id_start:
+                                winner_id = int(reward[winner_id_start:winner_id_end])
+                                user = bot.get_user(winner_id)
+                                if user:
+                                    if user.dm_channel is None:
+                                        await user.create_dm()
+                                    channel = user.dm_channel
+
+                                    embed = discord.Embed(
+                                        title="Boss Event",
+                                        description="## Rewards:\n" + reward
+                                    )
+                                    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/987157087693975612.png")
+                                    await channel.send(embed=embed)
+                        except (ValueError, discord.Forbidden, discord.HTTPException):
+                            continue
 
     @bot.event
     async def on_message(message):
@@ -160,23 +169,27 @@ def create_eggs_bot():
         if interaction.type == discord.InteractionType.component:
             custom_id = interaction.data.get("custom_id", "")
             if custom_id.startswith("geninv-"):
-                await interaction.response.defer(ephermal=True)  # Acknowledge the interaction immediately
+                await interaction.response.defer()
                 try:
-                    guild_id = int(custom_id.split("-")[1])
-                    guild = bot.get_guild(guild_id)
-                    if guild:
-                        # Find a channel where the bot can create an invite
-                        invite_channel = None
-                        for channel in guild.text_channels:
-                            if channel.permissions_for(guild.me).create_instant_invite:
-                                invite_channel = channel
-                                break
+                    channel_id = int(custom_id.split("-")[1])
+                    channel = bot.get_channel(channel_id)
+                    message = interaction.message
 
-                        if invite_channel:
-                            invite = await invite_channel.create_invite(max_age=600, max_uses=5,
-                                                                        reason="Boss Event Invite")
-                            message = interaction.message
+                    if message.embeds and len(message.embeds) > 0:
+                        data = message.embeds[0].description
+                        timestamp_start = data.find("<t:") + 3
+                        timestamp_end = data.find(":R>")
 
+                        if timestamp_start > 2 and timestamp_end > timestamp_start:
+                            timestamp = int(data[timestamp_start:timestamp_end])
+                            current_time = int(datetime.now(timezone.utc).timestamp())
+                            time_dif = max(300 - (current_time - timestamp), 60)
+                        else:
+                            time_dif = 300
+
+                        if channel:
+                            invite = await channel.create_invite(max_age=time_dif, max_uses=5,
+                                                                 reason="Boss Event Invite")
                             view = discord.ui.View()
                             view.add_item(
                                 discord.ui.Button(style=discord.ButtonStyle.url, url=invite.url, label="Join Server"))
@@ -184,11 +197,10 @@ def create_eggs_bot():
                             await message.edit(view=view)
                             await interaction.followup.send("Generated Invite.", ephemeral=True)
                         else:
-                            await interaction.followup.send(
-                                "I don't have permission to create an invite in that server.", ephemeral=True)
+                            await interaction.followup.send("Guild not found or I am no longer in that server.",
+                                                            ephemeral=True)
                     else:
-                        await interaction.followup.send("Guild not found or I am no longer in that server.",
-                                                        ephemeral=True)
+                        await interaction.followup.send("Unable to process the request.", ephemeral=True)
                 except Exception as e:
                     print(f"Error handling interaction: {e}")
                     await interaction.followup.send("An error occurred while creating the invite.", ephemeral=True)
@@ -198,7 +210,6 @@ def create_eggs_bot():
 
 # Main async launcher for all bots
 async def main():
-    # Use a list of tokens directly, assuming tokens.json contains a list of strings
     bots = [create_eggs_bot() for _ in TOKENS]
     await asyncio.gather(*(bot.start(token.strip()) for bot, token in zip(bots, TOKENS)))
 
