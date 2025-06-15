@@ -5,9 +5,10 @@ import json
 
 # CHANGE YOUR VARIABLES HERE:
 main_guildid = 1349398262322429952
-main_channelid = 1376603711891050619
-main_pingroleid = 2
-main_doublepingroleid = 1
+eggs_channelid = 1376603711891050619
+boss_channelid = 1376603711891050619
+main_pingroleid = "Test: Normal Day"
+main_doublepingroleid = "Test: Double XP"
 
 # Load tokens from tokens.json
 with open("tokens.json", "r") as f:
@@ -82,9 +83,9 @@ def create_eggs_bot():
                 len(message.embeds) > 0 and
                 message.embeds[0].description and
                 message.embeds[0].description.startswith("> Aw man, I dropped something in my eggs again.") and
-                message.guild and message.guild.id != main_guildid
+                message.guild
         ):
-            channel_tosend = bot.get_channel(main_channelid)
+            channel_tosend = bot.get_channel(eggs_channelid)
             if channel_tosend:
                 view, embed = await createinvite(message)
                 if view and embed:
@@ -105,7 +106,7 @@ def create_eggs_bot():
             guild = message.guild
             ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
-            channel_tosend = bot.get_channel(main_channelid)
+            channel_tosend = bot.get_channel(boss_channelid)
 
             if channel_tosend:
                 view = discord.ui.View()
@@ -131,7 +132,7 @@ def create_eggs_bot():
                 len(message.embeds) > 0 and
                 message.embeds[0].description and
                 message.embeds[0].description.endswith("has been defeated!") and
-                message.guild and message.guild.id != main_guildid
+                message.guild
         ):
             if len(message.embeds[0].fields) > 0:
                 rewards = message.embeds[0].fields[0].value.splitlines()
@@ -160,9 +161,10 @@ def create_eggs_bot():
     @bot.event
     async def on_message(message):
         if message.guild:
-            await check_eggsevent(message)
-            await check_bossevent(message)
-            await handle_bossend(message)
+            if message.guild.id != main_guildid:
+                await check_eggsevent(message)
+                await check_bossevent(message)
+                await handle_bossend(message)
 
     @bot.event
     async def on_interaction(interaction: discord.Interaction):
