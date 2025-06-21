@@ -4,12 +4,15 @@ import asyncio
 import json
 
 # CHANGE YOUR VARIABLES HERE:
-main_guildid = 1349398262322429952
-eggs_channelid = 1370046156838535220
-eggs_adminchannelid = 1384054854476894208
-boss_channelid = 1370044766292676608
-main_pingroleid = "Test: Normal Day"
-main_doublepingroleid = "Test: Double XP"
+with open ("config.json", "r") as data:
+    config = json.load(data)
+
+main_guildid = config.get("main_guildid")
+eggs_channelid = config.get("eggs_channelid")
+eggs_adminchannelid = config.get("eggs_adminchannelid")
+boss_channelid = config.get("boss_channelid")
+main_pingroleid = config.get("main_pingroleid")
+main_doublepingroleid = config.get("main_doublepingroleid")
 
 # Load tokens from tokens.json
 with open("tokens.json", "r") as f:
