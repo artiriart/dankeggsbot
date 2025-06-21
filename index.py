@@ -15,11 +15,9 @@ main_doublepingroleid = "Test: Double XP"
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
 
-# Dank Memer bot ID (hardcoded)
 dank_userid = 270904126974590976
+message_guild_storage = {}
 
-
-# Shared function to create a bot client with logic
 def create_eggs_bot():
     intents = discord.Intents.default()
     intents.guilds = True
@@ -127,7 +125,8 @@ def create_eggs_bot():
 
                 day = datetime.now(timezone.utc).weekday()
                 ping_content = "Boss drop on Double XP day" if day in [2, 6] else "Boss drop"
-                await channel_tosend.send(embed=embed, view=view, content=ping_content)
+                new_message = await channel_tosend.send(embed=embed, view=view, content=ping_content)
+                message_guild_storage[message.guild.id] = new_message.id
 
     async def handle_bossend(message):
         if (
@@ -169,6 +168,33 @@ def create_eggs_bot():
                 await check_eggsevent(message)
                 await check_bossevent(message)
                 await handle_bossend(message)
+                if message.embeds and message.author.id == dank_userid:
+                    desc = message.embeds[0].description or ""
+                    if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!"):
+                        message_guild_storage.pop(message.guild.id, None)
+
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        if getattr(reaction.emoji, "id", None) == 1071484103762915348:
+            guild_id = reaction.message.guild.id
+            channel = await bot.fetch_channel(boss_channelid)
+            message_id = message_guild_storage.get(guild_id)
+            if not message_id:
+                return
+            message = await channel.fetch_message(message_id)
+            players = int(message.components[0].components[1].custom_id)+1 if message.components[0].components[1].custom_id else 1
+            if players == 5:
+                view = discord.ui.View()
+                embed = discord.Embed(
+                    description="# Boss Event over!",
+                    color=discord.Color.default(),
+                )
+                await message.edit(view=view, embed=embed)
+            else:
+                view = discord.ui.View()
+                view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=message.components[0].components[0].url))
+                view.add_item(discord.ui.Button(label=f"Players: {players}/5", style=discord.ButtonStyle.gray, disabled=True, custom_id=str(players)))
+                await message.edit(view=view)
 
     @bot.event
     async def on_interaction(interaction: discord.Interaction):
