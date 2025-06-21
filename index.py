@@ -5,8 +5,9 @@ import json
 
 # CHANGE YOUR VARIABLES HERE:
 main_guildid = 1349398262322429952
-eggs_channelid = 1376603711891050619
-boss_channelid = 1376603711891050619
+eggs_channelid = 1370046156838535220
+eggs_adminchannelid = 1384054854476894208
+boss_channelid = 1370044766292676608
 main_pingroleid = "Test: Normal Day"
 main_doublepingroleid = "Test: Double XP"
 
@@ -85,7 +86,8 @@ def create_eggs_bot():
                 message.embeds[0].description.startswith("> Aw man, I dropped something in my eggs again.") and
                 message.guild
         ):
-            channel_tosend = bot.get_channel(eggs_channelid)
+            channel_tosend = bot.get_channel(eggs_adminchannelid)
+            channel_tosendafter = bot.get_channel(eggs_channelid)
             if channel_tosend:
                 view, embed = await createinvite(message)
                 if view and embed:
@@ -93,6 +95,8 @@ def create_eggs_bot():
                     ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
                                                                                        6] else f"Eggs drop <@&{main_pingroleid}>"
                     await channel_tosend.send(embed=embed, view=view, content=ping_content)
+                    await asyncio.sleep(30)
+                    await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
 
     async def check_bossevent(message):
         if (
