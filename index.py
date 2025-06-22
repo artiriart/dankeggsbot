@@ -101,7 +101,11 @@ def create_eggs_bot():
 
     async def check_bossevent(message):
         if (
-                (message.author.id == 734844583778975845)
+            message.author.id == dank_userid and
+            message.embeds and
+            message.embeds[0].description and
+            message.embeds[0].description.startswith("> OH SHIT A BOSS SPAWNED!") and
+            message.guild and message.guild.id != main_guildid
         ):
             guild = message.guild
             ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
