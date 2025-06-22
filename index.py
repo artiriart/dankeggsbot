@@ -120,7 +120,7 @@ def create_eggs_bot():
                     title="Boss Event",
                     description=f"in {guild.name}, which is owned by <@{ownerid}>\n"
                                 f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
-                    color=discord.Color.default(),
+                    color=discord.Color.yellow(),
                 )
                 embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1101064546812178506.png")
 
@@ -155,7 +155,8 @@ def create_eggs_bot():
 
                                     embed = discord.Embed(
                                         title="Boss Event",
-                                        description="## Rewards:\n" + reward
+                                        description=f"## Rewards:\n{reward}\n-# in `{message.guild.name}`",
+                                        color=discord.Color.green(),
                                     )
                                     embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/987157087693975612.png")
                                     await channel.send(embed=embed)
