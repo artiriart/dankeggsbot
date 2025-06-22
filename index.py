@@ -75,7 +75,8 @@ def create_eggs_bot():
             return view, embed
         except discord.Forbidden:
             return None, None
-        except Exception:
+        except Exception as a:
+            print(a)
             return None, None
 
     async def check_eggsevent(message):
@@ -218,8 +219,8 @@ def create_eggs_bot():
                     message = interaction.message
 
                     if message.embeds and len(message.embeds) > 0:
-                        data = message.embeds[0].description
-                        timestamp = int(data[data.find("<t:") + 3:data.find(":R>")])
+                        data_two = message.embeds[0].description
+                        timestamp = int(data_two[data_two.find("<t:") + 3:data_two.find(":R>")])
                         current_time = int(datetime.now(timezone.utc).timestamp())
 
                         if timestamp < current_time:
