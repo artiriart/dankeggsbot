@@ -101,23 +101,17 @@ def create_eggs_bot():
 
     async def check_bossevent(message):
         if (
-                (message.author.id == dank_userid and
-                 message.embeds and
-                 len(message.embeds) > 0 and
-                 message.embeds[0].description and
-                 message.embeds[0].description.startswith("> OH SHIT A BOSS SPAWNED!") and
-                 message.guild and message.guild.id != main_guildid)
+                (message.author.id == 734844583778975845)
         ):
             guild = message.guild
             ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
-            channel_tosend = bot.get_channel(boss_channelid)
+            channel_tosend = bot.get_channel(1265659093964554342)
 
             if channel_tosend:
                 view = discord.ui.View()
                 view.add_item(discord.ui.Button(label="Generate Invite", custom_id=f"geninv-{message.channel.id}",
                                                 style=discord.ButtonStyle.success))
-
                 embed = discord.Embed(
                     title="Boss Event",
                     description=f"in {guild.name}, which is owned by <@{ownerid}>\n"
@@ -149,7 +143,7 @@ def create_eggs_bot():
                             winner_id_end = reward.find(">")
                             if winner_id_start > 1 and winner_id_end > winner_id_start:
                                 winner_id = int(reward[winner_id_start:winner_id_end])
-                                user = bot.get_user(winner_id)
+                                user = await bot.fetch_user(winner_id)
                                 if user:
                                     if user.dm_channel is None:
                                         await user.create_dm()
@@ -185,7 +179,16 @@ def create_eggs_bot():
             if not message_id:
                 return
             message = await channel.fetch_message(message_id)
-            players = int(message.components[0].components[1].custom_id)+1 if message.components[0].components[1].custom_id else 1
+            try:
+                players = message.components[0].children[1].custom_id
+            except (IndexError, AttributeError):
+                players = 1
+            try:
+                players = int(players)+1
+            except Exception as e:
+                print(e)
+
+            print(players)
             if players == 5:
                 view = discord.ui.View()
                 embed = discord.Embed(
@@ -195,7 +198,7 @@ def create_eggs_bot():
                 await message.edit(view=view, embed=embed)
             else:
                 view = discord.ui.View()
-                view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=message.components[0].components[0].url))
+                view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=message.components[0].children[0].url))
                 view.add_item(discord.ui.Button(label=f"Players: {players}/5", style=discord.ButtonStyle.gray, disabled=True, custom_id=str(players)))
                 await message.edit(view=view)
 
@@ -227,7 +230,9 @@ def create_eggs_bot():
                             view = discord.ui.View()
                             view.add_item(
                                 discord.ui.Button(style=discord.ButtonStyle.url, url=invite.url, label="Join Server"))
-
+                            view.add_item(
+                                discord.ui.Button(label=f"Players: 0/5", style=discord.ButtonStyle.gray, disabled=True,
+                                                  custom_id="0"))
                             await message.edit(view=view)
                             await interaction.followup.send("Generated Invite.", ephemeral=True)
                         else:
