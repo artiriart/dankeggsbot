@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 import asyncio
 import json
 
-# CHANGE YOUR VARIABLES HERE:
 with open ("config.json", "r") as data:
     config = json.load(data)
 
@@ -14,7 +13,6 @@ boss_channelid = config.get("boss_channelid")
 main_pingroleid = config.get("main_pingroleid")
 main_doublepingroleid = config.get("main_doublepingroleid")
 
-# Load tokens from tokens.json
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
 
@@ -110,7 +108,7 @@ def create_eggs_bot():
             guild = message.guild
             ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
-            channel_tosend = bot.get_channel(1265659093964554342)
+            channel_tosend = bot.get_channel(boss_channelid)
 
             if channel_tosend:
                 view = discord.ui.View()
