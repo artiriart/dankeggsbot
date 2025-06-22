@@ -12,6 +12,8 @@ eggs_adminchannelid = config.get("eggs_adminchannelid")
 boss_channelid = config.get("boss_channelid")
 main_pingroleid = config.get("main_pingroleid")
 main_doublepingroleid = config.get("main_doublepingroleid")
+main_bossdoublepingroleid = config.get("main_bossdoublepingroleid")
+main_bosspingroleid = config.get("main_bosspingroleid")
 
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
@@ -123,7 +125,7 @@ def create_eggs_bot():
                 embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1101064546812178506.png")
 
                 day = datetime.now(timezone.utc).weekday()
-                ping_content = "Boss drop on Double XP day" if day in [2, 6] else "Boss drop"
+                ping_content = f"Boss Event {main_bossdoublepingroleid}" if day in [2, 6] else f"Boss Event {main_bosspingroleid}"
                 new_message = await channel_tosend.send(embed=embed, view=view, content=ping_content)
                 message_guild_storage[message.guild.id] = new_message.id
 

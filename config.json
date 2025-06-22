@@ -1,8 +1,10 @@
 {
-  "main_guildid": 1349398262322429952,
-  "eggs_channelid": 1370046156838535220,
-  "eggs_adminchannelid" : 1384054854476894208,
-  "boss_channelid" : 1370044766292676608,
-  "main_pingroleid": "Test: Normal Day",
-  "main_doublepingroleid" : "Test: Double XP"
+  "main_guildid": 1,
+  "eggs_channelid": 2,
+  "eggs_adminchannelid" : 3,
+  "boss_channelid" : 4,
+  "main_pingroleid": "Test: Boss Normal Day",
+  "main_doublepingroleid" : "Test: Boss Double XP",
+  "main_bossdoublepingroleid": "Test: Eggs Double XP",
+  "main_bosspingroleid": "Test: Eggs Normal XP"
 }
