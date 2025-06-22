@@ -192,7 +192,6 @@ def create_eggs_bot():
             except Exception as e:
                 print(e)
 
-            print(players)
             if players == 5:
                 view = discord.ui.View()
                 embed = discord.Embed(
