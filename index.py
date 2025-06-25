@@ -113,12 +113,14 @@ def create_eggs_bot():
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
             channel_tosend = bot.get_channel(boss_channelid)
             embed = discord.Embed(
-                title="Boss Event: Kick myself.",
+                title="Leave Server",
                 description="The boss event has started in this server. Good luck!\n**If you'd like to automatically leave this server, you can press the button below now. You can always rejoin later if needed.**",
                 color=discord.Color.random(),
             )
             view=discord.ui.View()
-            view=view.add_item(discord.ui.Button(label="Leave Server.", style=discord.ButtonStyle.danger, custom_id="kick_member"))
+            view = view.add_item(discord.ui.Button(label="Leave Server", style=discord.ButtonStyle.danger, custom_id="kick_member"))
+            view = view.add_item(
+                discord.ui.Button(label="Back to Boss Events Channel", style=discord.ButtonStyle.url, url=f"https://discord.com/channels/{main_guildid}/{boss_channelid}"))
             await message.reply(embed=embed, view=view)
 
             if channel_tosend:
