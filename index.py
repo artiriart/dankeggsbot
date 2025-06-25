@@ -210,7 +210,7 @@ def create_eggs_bot():
                     description="# Boss Event over!",
                     color=discord.Color.default(),
                 )
-                await message.edit(view=view, embed=embed)
+                await message.edit(view=view, embed=embed, content="")
             else:
                 view = discord.ui.View()
                 view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=message.components[0].children[0].url))
