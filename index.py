@@ -261,14 +261,14 @@ def create_eggs_bot():
                         embed = discord.Embed(
                             description="## You will leave this Server in 3 seconds...",
                         )
-                        await interaction.response.send_message(embed=embed)
+                        await interaction.response.send_message(embed=embed, ephemeral=True)
                         await asyncio.sleep(3)
                         await interaction.guild.kick(interaction.user, reason="Tapped leave Button for Boss Events")
                     except discord.Forbidden:
-                        await interaction.response.send_message(content="# Something went wrong!\n-# That means you are above me.")
+                        await interaction.response.send_message(content="# Something went wrong!\n-# That means you are above me.", ephemeral=True)
                 else:
                     await interaction.response.send_message(
-                        content="# Something went wrong!\n-# That means I dont have the required (kick_members) permissions.")
+                        content="# Something went wrong!\n-# That means I dont have the required (kick_members) permissions.", ephemeral=True)
 
     return bot
 
