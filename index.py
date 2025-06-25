@@ -215,7 +215,9 @@ def create_eggs_bot():
                 view = discord.ui.View()
                 view.add_item(discord.ui.Button(label="Invite Link", style=discord.ButtonStyle.url, url=message.components[0].children[0].url))
                 view.add_item(discord.ui.Button(label=f"Players: {players}/5", style=discord.ButtonStyle.gray, disabled=True, custom_id=str(players)))
-                await message.edit(view=view)
+                embed = message.embeds[0]
+                embed.description = f"{message.embeds[0].description if message.embeds[0].description else 'Error.'}\n`#{players}` {reaction.message.author.mention}"
+                await message.edit(view=view, embed=embed)
 
     @bot.event
     async def on_interaction(interaction: discord.Interaction):
@@ -248,7 +250,9 @@ def create_eggs_bot():
                             view.add_item(
                                 discord.ui.Button(label=f"Players: 0/5", style=discord.ButtonStyle.gray, disabled=True,
                                                   custom_id="0"))
-                            await message.edit(view=view)
+                            embed = message.embeds[0]
+                            embed.description = f"{message.embeds[0].description if message.embeds[0].description else 'Error.'}\n## Joined Players:"
+                            await message.edit(view=view, embed=embed)
                             await interaction.followup.send("Generated Invite.", ephemeral=True)
                         else:
                             await interaction.followup.send("Guild not found or I am no longer in that server.",
