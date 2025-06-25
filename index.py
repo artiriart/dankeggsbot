@@ -119,7 +119,7 @@ def create_eggs_bot():
             )
             view=discord.ui.View()
             view=view.add_item(discord.ui.Button(label="Leave Server.", style=discord.ButtonStyle.danger, custom_id="kick_member"))
-            message.reply(embed=embed, view=view)
+            await message.reply(embed=embed, view=view)
 
             if channel_tosend:
                 view = discord.ui.View()
