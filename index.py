@@ -112,6 +112,14 @@ def create_eggs_bot():
             ownerid = guild.owner_id if guild.owner_id else "Owner ID Empty, couldnt fetch Owner"
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 600)
             channel_tosend = bot.get_channel(boss_channelid)
+            embed = discord.Embed(
+                title="Boss Event: Kick myself.",
+                description="The boss event has started in this server. Good luck!\n**If you'd like to automatically leave this server, you can press the button below now. You can always rejoin later if needed.**",
+                color=discord.Color.random(),
+            )
+            view=discord.ui.View()
+            view=view.add_item(discord.ui.Button(label="Leave Server.", style=discord.ButtonStyle.danger, custom_id="kick_member"))
+            message.reply(embed=embed, view=view)
 
             if channel_tosend:
                 view = discord.ui.View()
@@ -246,6 +254,21 @@ def create_eggs_bot():
                 except Exception as e:
                     print(f"Error handling interaction: {e}")
                     await interaction.followup.send("An error occurred while creating the invite.", ephemeral=True)
+            elif custom_id=="kick_member":
+                perms = interaction.channel.permissions_for(interaction.guild.me)
+                if perms.kick_members:
+                    try:
+                        embed = discord.Embed(
+                            description="## You will leave this Server in 3 seconds...",
+                        )
+                        await interaction.response.send_message(embed=embed)
+                        await asyncio.sleep(3)
+                        await interaction.guild.kick(interaction.user, reason="Tapped leave Button for Boss Events")
+                    except discord.Forbidden:
+                        await interaction.response.send_message(content="# Something went wrong!\n-# That means you are above me.")
+                else:
+                    await interaction.response.send_message(
+                        content="# Something went wrong!\n-# That means I dont have the required (kick_members) permissions.")
 
     return bot
 
