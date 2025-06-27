@@ -97,8 +97,9 @@ def create_eggs_bot():
                     ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
                                                                                        6] else f"Eggs drop <@&{main_pingroleid}>"
                     await channel_tosend.send(embed=embed, view=view, content=ping_content)
-                    await asyncio.sleep(30)
-                    await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
+                    await asyncio.sleep(20)
+                    eggs_message_final = await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
+                    message_guild_storage[message.guild.id] = eggs_message_final.id
 
     async def check_bossevent(message):
         if (
@@ -142,6 +143,27 @@ def create_eggs_bot():
                 new_message = await channel_tosend.send(embed=embed, view=view, content=ping_content)
                 message_guild_storage[message.guild.id] = new_message.id
 
+    async def eggs_end(message, attempt=0):
+        if message.embeds and message.author.id == dank_userid and message.embeds[0].description and message.embeds[0].description.startswith("> You typed"):
+            claim_user = message.reference.author.id if message.reference else "No User!"
+            main_message_id = message_guild_storage.get(message.guild.id, None)
+            channel = await bot.fetch_channel(eggs_channelid)
+            if main_message_id:
+                main_message = await channel.fetch_message(main_message_id)
+                embed = discord.Embed(
+                    description=f"# Egg Claimed by <@{claim_user}>",
+                    color=discord.Color.dark_blue(),
+                )
+                await main_message.edit(content="", embed=embed)
+            else:
+                if attempt>=6:
+                    pass
+                else:
+                    attempt=attempt+1
+                    await asyncio.sleep(5)
+                    await eggs_end(message, attempt)
+
+
     async def handle_bossend(message):
         if (
                 message.author.id == dank_userid and
@@ -183,9 +205,10 @@ def create_eggs_bot():
                 await check_eggsevent(message)
                 await check_bossevent(message)
                 await handle_bossend(message)
+                await eggs_end(message)
                 if message.embeds and message.author.id == dank_userid:
                     desc = message.embeds[0].description or ""
-                    if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!"):
+                    if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!") or desc.startswith("The correct answer was") or desc.startswith("> You typed"):
                         message_guild_storage.pop(message.guild.id, None)
 
     @bot.event
