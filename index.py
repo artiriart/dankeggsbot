@@ -2,6 +2,7 @@ import discord
 from datetime import datetime, timezone
 import asyncio
 import json
+import aiosqlite
 
 with open ("config.json", "r") as data:
     config = json.load(data)
@@ -19,7 +20,17 @@ with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
 
 dank_userid = 270904126974590976
-message_guild_storage = {}
+database_path = "database.db"
+
+async def db_setup():
+    async with aiosqlite.connect("database.db") as db:
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS msg_guild (
+        guild_id TEXT PRIMARY KEY,
+        message_id TEXT );
+        """)
+        await db.execute("DELETE FROM msg_guild")
+        await db.commit()
 
 def create_eggs_bot():
     intents = discord.Intents.default()
@@ -99,7 +110,9 @@ def create_eggs_bot():
                     await channel_tosend.send(embed=embed, view=view, content=ping_content)
                     await asyncio.sleep(20)
                     eggs_message_final = await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
-                    message_guild_storage[message.guild.id] = eggs_message_final.id
+                    async with aiosqlite.connect(database_path) as db:
+                        await db.execute(f"INSERT IGNORE INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{eggs_message_final.id}');")
+                        await db.commit()
 
     async def check_bossevent(message):
         if (
@@ -141,12 +154,21 @@ def create_eggs_bot():
                 day = datetime.now(timezone.utc).weekday()
                 ping_content = f"Boss Event <@&{main_bossdoublepingroleid}>" if day in [2, 6] else f"Boss Event <@&{main_bosspingroleid}>"
                 new_message = await channel_tosend.send(embed=embed, view=view, content=ping_content)
-                message_guild_storage[message.guild.id] = new_message.id
+                async with aiosqlite.connect(database_path) as db:
+                    await db.execute(
+                        f"INSERT IGNORE INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{new_message.id}');")
+                    await db.commit()
 
     async def eggs_end(message, attempt=0):
         if message.embeds and message.author.id == dank_userid and message.embeds[0].description and message.embeds[0].description.startswith("> You typed"):
             claim_user = message.reference.author.id if message.reference else "No User!"
-            main_message_id = message_guild_storage.get(message.guild.id, None)
+            async with aiosqlite.connect(database_path) as db:
+                async with db.execute(f"SELECT * FROM msg_guild WHERE guild_id='{message.guild.id}';") as cursor:
+                    row = await cursor.fetchone()
+                    if row:
+                        main_message_id = row[1]
+
+
             channel = await bot.fetch_channel(eggs_channelid)
             if main_message_id:
                 main_message = await channel.fetch_message(main_message_id)
@@ -209,14 +231,20 @@ def create_eggs_bot():
                 if message.embeds and message.author.id == dank_userid:
                     desc = message.embeds[0].description or ""
                     if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!") or desc.startswith("The correct answer was") or desc.startswith("> You typed"):
-                        message_guild_storage.pop(message.guild.id, None)
+                        async with aiosqlite.connect(database_path) as db:
+                            await db.execute(
+                                f"DELETE FROM msg_guild WHERE guild_id ='{message.guild.id}';")
+                            await db.commit()
 
     @bot.event
     async def on_reaction_add(reaction, user):
         if getattr(reaction.emoji, "id", None) == 1071484103762915348:
-            guild_id = reaction.message.guild.id
             channel = await bot.fetch_channel(boss_channelid)
-            message_id = message_guild_storage.get(guild_id)
+            async with aiosqlite.connect(database_path) as db:
+                async with db.execute(f"SELECT * FROM msg_guild WHERE guild_id='{reaction.message.guild.id}';") as cursor:
+                    row = await cursor.fetchone()
+                    if row:
+                        message_id = row[1]
             if not message_id:
                 return
             message = await channel.fetch_message(message_id)
