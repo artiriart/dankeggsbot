@@ -361,6 +361,7 @@ def create_eggs_bot():
 
     @bot.event
     async def on_reaction_add(reaction, user):
+        user=reaction.message.author.id
         if getattr(reaction.emoji, "id", None) == 1071484103762915348:
             try:
                 channel = bot.get_channel(boss_channelid)
