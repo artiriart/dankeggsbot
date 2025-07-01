@@ -311,13 +311,14 @@ def create_eggs_bot():
     async def linkaccount(message):
         msg_content = message.content
         if msg_content.startswith("!acclink"):
-            args = msg_content.split(" ")
-            alt_id=args[1]
-            async with aiosqlite.connect(database_path) as db:
-                await db.execute("INSERT OR REPLACE INTO user_links (main_user_id, alt_user_id) VALUES (?, ?)",
-                                 (str(message.author.id), str(alt_id)))
-                await db.commit()
-                message.reply(content=f"Successfully linked you to <@{alt_id}>")
+            args = msg_content.split()
+            alt_id=args[1] if int(args[1]) else None
+            if alt_id:
+                async with aiosqlite.connect(database_path) as db:
+                    await db.execute("INSERT OR REPLACE INTO user_links (main_user_id, alt_user_id) VALUES (?, ?)",
+                                     (str(message.author.id), str(alt_id)))
+                    await db.commit()
+                    message.reply(content=f"Successfully linked you to <@{alt_id}>")
 
     async def handle_eggs_xp(message):
         if (
@@ -378,7 +379,7 @@ def create_eggs_bot():
     @bot.event
     async def on_reaction_add(reaction, user):
         user = reaction.message.author.id
-        if getattr(reaction.emoji, "id", None) == 1071484103762915348:
+        if reaction.emoji.id == 1071484103762915348:
             try:
                 channel = bot.get_channel(boss_channelid)
                 async with aiosqlite.connect(database_path) as db:
