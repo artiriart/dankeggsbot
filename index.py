@@ -15,6 +15,7 @@ main_pingroleid = config.get("main_pingroleid")
 main_doublepingroleid = config.get("main_doublepingroleid")
 main_bossdoublepingroleid = config.get("main_bossdoublepingroleid")
 main_bosspingroleid = config.get("main_bosspingroleid")
+eggs_blacklistrole = config.get("eggs_blacklistrole")
 
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
@@ -22,28 +23,73 @@ with open("tokens.json", "r") as f:
 dank_userid = 270904126974590976
 database_path = "database.db"
 
-async def db_setup():
-    async with aiosqlite.connect("database.db") as db:
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS msg_guild (
-        guild_id TEXT PRIMARY KEY,
-        message_id TEXT );
-        """)
-        await db.execute("DELETE FROM msg_guild")
-        await db.commit()
-
 def create_eggs_bot():
     intents = discord.Intents.default()
     intents.guilds = True
     intents.guild_messages = True
     intents.message_content = True
+    intents.members = True
 
     bot = discord.Client(intents=intents, max_messages=0)
 
     @bot.event
     async def on_ready():
         print(f'Bot up. Name: {bot.user}\n---')
+        await bot.loop.create_task(db_setup())
+        await bot.loop.create_task(check_db())
         await bot.loop.create_task(update_presence())
+
+    async def db_setup():
+        async with aiosqlite.connect("database.db") as db:
+            await db.execute("""
+            CREATE TABLE IF NOT EXISTS msg_guild (
+                guild_id TEXT PRIMARY KEY,
+                message_id TEXT
+            );
+            """)
+
+            await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_scores (
+                user_id TEXT PRIMARY KEY,
+                amount INTEGER
+            );
+            """)
+
+            await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_links (
+                main_user_id TEXT PRIMARY KEY,
+                alt_user_id TEXT
+            );
+            """)
+
+            await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_cooldown (
+                user_id TEXT PRIMARY KEY,
+                unix_end TEXT
+            );
+            """)
+
+            await db.execute("DELETE FROM msg_guild")
+            await db.commit()
+
+    async def check_db():
+        while True:
+            await asyncio.sleep(30)
+            if bot.user.id == 123:
+                timestamp = int(datetime.now(timezone.utc).timestamp())
+                async with aiosqlite.connect(database_path) as db:
+                    async with db.execute(
+                            f"SELECT user_id FROM user_cooldown WHERE unix_end<='{timestamp}';") as cursor:
+                        rows = await cursor.fetchall()
+                        if rows:
+                            for row in rows:
+                                user_id = row[0]
+                                try:
+                                    guild = await bot.fetch_guild(main_guildid)
+                                    member = await guild.fetch_member(user_id)
+                                    await member.remove_roles(eggs_blacklistrole)
+                                except Exception as e:
+                                    pass
 
     async def update_presence():
         """Update bot presence every hour"""
@@ -111,7 +157,7 @@ def create_eggs_bot():
                     await asyncio.sleep(20)
                     eggs_message_final = await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
                     async with aiosqlite.connect(database_path) as db:
-                        await db.execute(f"INSERT IGNORE INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{eggs_message_final.id}');")
+                        await db.execute(f"INSERT INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{eggs_message_final.id}');")
                         await db.commit()
 
     async def check_bossevent(message):
@@ -156,17 +202,17 @@ def create_eggs_bot():
                 new_message = await channel_tosend.send(embed=embed, view=view, content=ping_content)
                 async with aiosqlite.connect(database_path) as db:
                     await db.execute(
-                        f"INSERT IGNORE INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{new_message.id}');")
+                        f"INSERT INTO msg_guild (guild_id, message_id) VALUES ('{message.guild.id}', '{new_message.id}');")
                     await db.commit()
 
     async def eggs_end(message, attempt=0):
         if message.embeds and message.author.id == dank_userid and message.embeds[0].description and message.embeds[0].description.startswith("> You typed"):
             claim_user = message.reference.author.id if message.reference else "No User!"
             async with aiosqlite.connect(database_path) as db:
-                async with db.execute(f"SELECT * FROM msg_guild WHERE guild_id='{message.guild.id}';") as cursor:
+                async with db.execute(f"SELECT message_id FROM msg_guild WHERE guild_id='{message.guild.id}';") as cursor:
                     row = await cursor.fetchone()
                     if row:
-                        main_message_id = row[1]
+                        main_message_id = row[0]
 
 
             channel = await bot.fetch_channel(eggs_channelid)
@@ -177,13 +223,6 @@ def create_eggs_bot():
                     color=discord.Color.dark_blue(),
                 )
                 await main_message.edit(content="", embed=embed)
-            else:
-                if attempt>=6:
-                    pass
-                else:
-                    attempt=attempt+1
-                    await asyncio.sleep(5)
-                    await eggs_end(message, attempt)
 
 
     async def handle_bossend(message):
@@ -202,7 +241,7 @@ def create_eggs_bot():
                         try:
                             winner_id_start = reward.find("<@") + 2
                             winner_id_end = reward.find(">")
-                            if winner_id_start > 1 and winner_id_end > winner_id_start:
+                            if 1 < winner_id_start < winner_id_end:
                                 winner_id = int(reward[winner_id_start:winner_id_end])
                                 user = await bot.fetch_user(winner_id)
                                 if user:
@@ -220,6 +259,29 @@ def create_eggs_bot():
                         except (ValueError, discord.Forbidden, discord.HTTPException):
                             continue
 
+    async def handle_eggs_xp(message):
+        if (
+                message.author.id == dank_userid and
+                message.embeds and
+                len(message.embeds) > 0 and
+                message.embeds[0].fields and
+                message.embeds[0].fields[0].value == "- 2.00x XP Multiplier for 1h" and
+                message.guild
+        ):
+            if message.reference:
+                winner=message.reference.author.id
+                expiring_time = int(datetime.now(timezone.utc).timestamp() + 3600)
+                async with aiosqlite.connect(database_path) as db:
+                    await db.execute(
+                        f"INSERT INTO user_cooldown (user_id, unix_end) VALUES ('{winner}', '{expiring_time}');")
+                    await db.commit()
+                guild = await bot.fetch_guild(main_guildid)
+                try:
+                    member = await guild.fetch_member(winner)
+                    await member.add_roles(eggs_blacklistrole)
+                except Exception as e:
+                    pass
+
     @bot.event
     async def on_message(message):
         if message.guild:
@@ -228,6 +290,7 @@ def create_eggs_bot():
                 await check_bossevent(message)
                 await handle_bossend(message)
                 await eggs_end(message)
+                await handle_eggs_xp(message)
                 if message.embeds and message.author.id == dank_userid:
                     desc = message.embeds[0].description or ""
                     if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!") or desc.startswith("The correct answer was") or desc.startswith("> You typed"):
@@ -241,10 +304,10 @@ def create_eggs_bot():
         if getattr(reaction.emoji, "id", None) == 1071484103762915348:
             channel = await bot.fetch_channel(boss_channelid)
             async with aiosqlite.connect(database_path) as db:
-                async with db.execute(f"SELECT * FROM msg_guild WHERE guild_id='{reaction.message.guild.id}';") as cursor:
+                async with db.execute(f"SELECT message_id FROM msg_guild WHERE guild_id='{reaction.message.guild.id}';") as cursor:
                     row = await cursor.fetchone()
                     if row:
-                        message_id = row[1]
+                        message_id = row[0]
             if not message_id:
                 return
             message = await channel.fetch_message(message_id)
@@ -272,6 +335,19 @@ def create_eggs_bot():
                 old_desc = message.embeds[0].description or "Error."
                 embed.description = f"{old_desc}\n`#{players}` <@{reaction.message.author.id}>"
                 await message.edit(view=view, embed=embed)
+
+    @bot.event
+    async def on_guild_join(guild):
+        owner=guild.owner_id
+        async with aiosqlite.connect(database_path) as db:
+            async with db.execute(f"SELECT main_user_id FROM user_links WHERE alt_user_id='{owner}';") as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    owner = row[0]
+        async with aiosqlite.connect(database_path) as db:
+            await db.execute(
+                f"INSERT INTO user_scores (user_id, amount) VALUES ('{owner}', 1)ON CONFLICT(user_id) DO UPDATE SET amount = amount + 1;")
+            await db.commit()
 
     @bot.event
     async def on_interaction(interaction: discord.Interaction):

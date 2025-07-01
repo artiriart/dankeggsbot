@@ -6,5 +6,6 @@
   "main_pingroleid": "Test: Boss Normal Day",
   "main_doublepingroleid" : "Test: Boss Double XP",
   "main_bossdoublepingroleid": "Test: Eggs Double XP",
-  "main_bosspingroleid": "Test: Eggs Normal XP"
+  "main_bosspingroleid": "Test: Eggs Normal XP",
+  "eggs_blacklistrole": 1
 }
