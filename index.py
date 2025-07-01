@@ -95,26 +95,27 @@ def create_eggs_bot():
         await bot.wait_until_ready()
         while not bot.is_closed():
             try:
-                await asyncio.sleep(30)
-                timestamp = int(datetime.now(timezone.utc).timestamp())
-                async with aiosqlite.connect(database_path) as db:
-                    async with db.execute(
-                            "SELECT user_id FROM user_cooldown WHERE unix_end <= ?", (str(timestamp),)) as cursor:
-                        rows = await cursor.fetchall()
-                        if rows:
-                            for row in rows:
-                                user_id = row[0]
-                                try:
-                                    guild = await bot.fetch_guild(main_guildid)
-                                    member = await guild.fetch_member(user_id)
-                                    role = guild.get_role(eggs_blacklistrole)
-                                    if role:
-                                        await member.remove_roles(role)
-                                    # Remove from cooldown table
-                                    await db.execute("DELETE FROM user_cooldown WHERE user_id = ?", (user_id,))
-                                    await db.commit()
-                                except Exception as e:
-                                    logger.error(f"Error removing role from user {user_id}: {e}")
+                if bot.user.id == 1377323279466889447:
+                    await asyncio.sleep(30)
+                    timestamp = int(datetime.now(timezone.utc).timestamp())
+                    async with aiosqlite.connect(database_path) as db:
+                        async with db.execute(
+                                "SELECT user_id FROM user_cooldown WHERE unix_end <= ?", (str(timestamp),)) as cursor:
+                            rows = await cursor.fetchall()
+                            if rows:
+                                for row in rows:
+                                    user_id = row[0]
+                                    try:
+                                        guild = await bot.fetch_guild(main_guildid)
+                                        member = await guild.fetch_member(user_id)
+                                        role = guild.get_role(eggs_blacklistrole)
+                                        if role:
+                                            await member.remove_roles(role)
+                                        # Remove from cooldown table
+                                        await db.execute("DELETE FROM user_cooldown WHERE user_id = ?", (user_id,))
+                                        await db.commit()
+                                    except Exception as e:
+                                        logger.error(f"Error removing role from user {user_id}: {e}")
             except Exception as e:
                 logger.error(f"Error in check_db: {e}")
 
@@ -309,16 +310,24 @@ def create_eggs_bot():
                             continue
 
     async def linkaccount(message):
-        msg_content = message.content
-        if msg_content.startswith("!acclink"):
-            args = msg_content.split()
-            alt_id=args[1] if int(args[1]) else None
-            if alt_id:
+        if bot.user.id == 1377323279466889447:
+            msg_content = message.content
+            if msg_content.startswith("!acclink"):
+                try:
+                    alt_id = int(msg_content.split()[1])
+                except (IndexError, ValueError):
+                    await message.reply("❌ Please provide a valid alt user ID.\nUsage: `!acclink <alt_id>`")
+                    return
+
                 async with aiosqlite.connect(database_path) as db:
-                    await db.execute("INSERT OR REPLACE INTO user_links (main_user_id, alt_user_id) VALUES (?, ?)",
-                                     (str(message.author.id), str(alt_id)))
+                    await db.execute(
+                        "INSERT OR REPLACE INTO user_links (main_user_id, alt_user_id) VALUES (?, ?)",
+                        (str(message.author.id), str(alt_id))
+                    )
                     await db.commit()
-                    message.reply(content=f"Successfully linked you to <@{alt_id}>")
+
+                await message.reply(content=f"✅ Successfully linked you to <@{alt_id}>.")
+
 
     async def handle_eggs_xp(message):
         if (
