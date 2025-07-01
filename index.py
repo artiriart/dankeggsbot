@@ -16,7 +16,7 @@ try:
 except FileNotFoundError:
     logger.error("config.json not found!")
     exit(1)
-
+eggs_access_role = config.get("eggs_access_role")
 main_guildid = config.get("main_guildid")
 eggs_channelid = config.get("eggs_channelid")
 boss_channelid = config.get("boss_channelid")
@@ -426,6 +426,17 @@ def create_eggs_bot():
                 await db.execute("""INSERT INTO user_scores (user_id, amount) VALUES (?, 1) 
                                    ON CONFLICT(user_id) DO UPDATE SET amount = amount + 1""", (str(owner),))
                 await db.commit()
+
+                async with db.execute("SELECT user_id FROM user_scores WHERE amount >= 60;") as cursor:
+                    rows = await cursor.fetchall()
+                    for row in rows:
+                        user_id = row[0]
+                        guild = await bot.fetch_guild(main_guildid)
+                        member = await guild.fetch_member(user_id)
+                        if not any(role.id == eggs_access_role for role in member.roles):
+                            role = guild.get_role(eggs_access_role)
+                            await member.add_roles(role)
+
         except Exception as e:
             logger.error(f"Error in on_guild_join: {e}")
 
