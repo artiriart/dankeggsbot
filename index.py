@@ -97,7 +97,7 @@ def create_eggs_bot():
                     ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
                                                                                        6] else f"Eggs drop <@&{main_pingroleid}>"
                     await channel_tosend.send(embed=embed, view=view, content=ping_content)
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(5)
                     await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
 
     async def check_bossevent(message):
