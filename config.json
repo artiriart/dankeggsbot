@@ -7,5 +7,6 @@
   "main_bossdoublepingroleid": "Test: Eggs Double XP",
   "main_bosspingroleid": "Test: Eggs Normal XP",
   "eggs_blacklistrole": 1265660117496365058,
-  "eggs_access_role": 281739
+  "eggs_access_role": 281739,
+  "main_adminchannel": 87192
 }

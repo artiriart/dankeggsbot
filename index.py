@@ -25,6 +25,7 @@ main_doublepingroleid = config.get("main_doublepingroleid")
 main_bossdoublepingroleid = config.get("main_bossdoublepingroleid")
 main_bosspingroleid = config.get("main_bosspingroleid")
 eggs_blacklistrole = config.get("eggs_blacklistrole")
+main_adminchannel = config.get("main_adminchannel")
 
 try:
     with open("tokens.json", "r") as f:
@@ -172,12 +173,15 @@ def create_eggs_bot():
                 message.guild
         ):
             channel_tosendafter = bot.get_channel(eggs_channelid)
+            channel_tosend = bot.get_channel(main_adminchannel)
             view, embed = await createinvite(message)
             if view and embed:
                 day = datetime.now(timezone.utc).weekday()
                 ping_content = f"Eggs drop <@&{main_doublepingroleid}>" if day in [2,
                                                                                    6] else f"Eggs drop <@&{main_pingroleid}>"
                 try:
+                    await channel_tosend.send(embed=embed, view=view, content=ping_content)
+                    await asyncio.sleep(5)
                     eggs_message_final = await channel_tosendafter.send(embed=embed, view=view,
                                                                         content=ping_content)
                     async with aiosqlite.connect(database_path) as db:
