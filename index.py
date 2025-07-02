@@ -26,6 +26,7 @@ def create_eggs_bot():
     intents.guilds = True
     intents.guild_messages = True
     intents.message_content = True
+    intents.members = True
 
     bot = discord.Client(intents=intents, max_messages=0)
 
