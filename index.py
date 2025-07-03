@@ -85,6 +85,7 @@ def create_eggs_bot():
                 message.embeds[0].description and
                 message.embeds[0].description.startswith("> You typed") and
                 message.reference):
+            # comment
             message_id = message_guild_storage.get(message.guild.id, False)
             if message_id:
                 claim_user = message.reference.resolved.author.id if message.reference.resolved else "No User!"
