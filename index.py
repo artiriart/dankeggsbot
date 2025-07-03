@@ -124,8 +124,6 @@ def create_eggs_bot():
                     await asyncio.sleep(5)
                     eggs_announce_message = await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
                     message_guild_storage[message.guild.id] = eggs_announce_message.id
-                    print(f"Saved {message.guild.name}'s Egg Message to {eggs_announce_message.jump_url}")
-                    print(f"Current storage: {message_guild_storage}")
 
     async def check_bossevent(message):
         if (
