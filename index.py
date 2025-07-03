@@ -80,6 +80,29 @@ def create_eggs_bot():
             print(a)
             return None, None
 
+    async def eggs_end(message):
+        if (message.embeds and message.author.id == dank_userid and
+                message.embeds[0].description and
+                message.embeds[0].description.startswith("> You typed") and
+                message.reference):
+            message_id = message_guild_storage.get(message.guild.id, False)
+            if message_id:
+                claim_user = message.reference.resolved.author.id if message.reference.resolved else "No User!"
+                fields = message.embeds[0].fields
+                if fields and "XP" in fields[0].value:
+                    xp_text = "<:reply_arrow:1389942241459703929> User successfully gained XP Multi!"
+                else:
+                    xp_text = "<:reply_arrow:1389942241459703929> Fail!"
+
+                embed = discord.Embed(
+                    description=f"# Egg Claimed by <@{claim_user}>\n{xp_text}",
+                    color=discord.Color.dark_blue(),
+                )
+                view = discord.ui.View()
+                main_eggschannel = await bot.fetch_channel(eggs_channelid)
+                announce_message = await main_eggschannel.fetch_message(message_id)
+                await announce_message.edit(content="", embed=embed, view=view)
+
     async def check_eggsevent(message):
         if (
                 message.author.id == dank_userid and
@@ -99,7 +122,10 @@ def create_eggs_bot():
                                                                                        6] else f"Eggs drop <@&{main_pingroleid}>"
                     await channel_tosend.send(embed=embed, view=view, content=ping_content)
                     await asyncio.sleep(5)
-                    await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
+                    eggs_announce_message = await channel_tosendafter.send(embed=embed, view=view, content=ping_content)
+                    message_guild_storage[message.guild.id] = eggs_announce_message.id
+                    print(f"Saved {message.guild.name}'s Egg Message to {eggs_announce_message.jump_url}")
+                    print(f"Current storage: {message_guild_storage}")
 
     async def check_bossevent(message):
         if (
@@ -124,6 +150,7 @@ def create_eggs_bot():
                 view = view.add_item(discord.ui.Button(label="Leave Server", style=discord.ButtonStyle.danger, custom_id="kick_member"))
                 view = view.add_item(
                     discord.ui.Button(label="Back to Boss Events Channel", style=discord.ButtonStyle.url, url=f"https://discord.com/channels/{main_guildid}/{boss_channelid}"))
+                view = view.add_item(discord.ui.Button(label="RUN A COMMAND PLEASE", custom_id="x", style=discord.ButtonStyle.gray, disabled=True))
                 await message.reply(embed=embed, view=view)
 
             if channel_tosend:
@@ -184,6 +211,7 @@ def create_eggs_bot():
                 await check_eggsevent(message)
                 await check_bossevent(message)
                 await handle_bossend(message)
+                await eggs_end(message)
                 if message.embeds and message.author.id == dank_userid:
                     desc = message.embeds[0].description or ""
                     if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!"):
