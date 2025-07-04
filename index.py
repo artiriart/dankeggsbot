@@ -1,7 +1,8 @@
 import discord
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 import asyncio
 import json
+import aiosqlite
 
 with open ("config.json", "r") as data:
     config = json.load(data)
@@ -19,8 +20,20 @@ egg_cooldown = config.get("egg_cooldown")
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
 
+db_path = "database.db"
+
 dank_userid = 270904126974590976
 message_guild_storage = {}
+
+async def db_setup():
+    async with aiosqlite.connect(db_path) as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS guild_cooldowns (
+                guild_id TEXT PRIMARY KEY,
+                ordinal INTEGER
+            )
+        """)
+        await conn.commit()
 
 def create_eggs_bot():
     intents = discord.Intents.default()
@@ -35,6 +48,9 @@ def create_eggs_bot():
     async def on_ready():
         print(f'Bot up. Name: {bot.user}\n---')
         await bot.loop.create_task(update_presence())
+        if bot.user.id==1377323279466889447:
+            await asyncio.create_task(db_setup())
+            await bot.loop.create_task(inactive_servers_checkup())
 
     async def update_presence():
         """Update bot presence every hour"""
@@ -52,6 +68,42 @@ def create_eggs_bot():
                 print(f"Error updating presence: {e}")
             finally:
                 await asyncio.sleep(3600)
+
+    async def inactive_servers_checkup():
+        await bot.wait_until_ready()
+        while not bot.is_closed():
+            try:
+                today = date.today()
+                ordinal = today.toordinal()
+                channel = await bot.fetch_channel(1390746261480804442)
+                async with aiosqlite.connect(db_path) as conn:
+                    cursor = await conn.execute("SELECT guild_id FROM guild_cooldowns WHERE ordinal <= ?", (ordinal - 6,))
+                    rows = await cursor.fetchall()
+                    for row in rows:
+                        guild_id = row[0]
+                        guild = await bot.fetch_guild(guild_id)
+                        channels = await guild.fetch_channels()
+                        inv_channel = False
+                        for ch in channels:
+                            if isinstance(ch, discord.TextChannel):
+                                inv_channel = ch
+                                break
+                        if inv_channel:
+                            invite = await channels[0].create_invite(max_age=86400, reason="Refresh Channel Invite")
+                            embed = discord.Embed(
+                                description="# Inactive Server:\n"
+                                            f"Name: `{guild.name}`"
+                            )
+                            view = discord.ui.View()
+                            view = view.add_item(discord.ui.Button(style=discord.ButtonStyle.url, url=invite.url))
+                            await channel.send(view=view, embed=embed)
+            except discord.NotFound:
+                async with aiosqlite.connect(db_path) as conn:
+                    await conn.execute("DELETE FROM guild_cooldowns WHERE guild_id = ?", (guild_id,))
+            except Exception as e:
+                print(e)
+            finally:
+                await asyncio.sleep(86400)
 
     async def createinvite(message):
         guild = message.guild
@@ -86,7 +138,20 @@ def create_eggs_bot():
         await asyncio.sleep(3600)
         await member.remove_roles(role, reason="Eggs Blacklist Temprole")
 
-    # noinspection PyAsyncCall
+    async def dank_refresh_message(message):
+        if message.author.id == dank_userid:
+            ref_check = (message.reference and message.reference.resolved
+                         and message.reference.resolved.author.id != dank_userid)
+            int_check = (hasattr(message, "interaction") and message.interaction
+                         and message.interaction.user.id != dank_userid)
+            if ref_check or int_check:
+                today = date.today()
+                ordinal = today.toordinal()
+                async with aiosqlite.connect(db_path) as conn:
+                    await conn.execute(f"INSERT OR REPLACE INTO guild_cooldowns (guild_id, ordinal) VALUES (?, ?)", (message.guild.id, ordinal))
+                    await conn.commit()
+
+                # noinspection PyAsyncCall
     async def eggs_end(message):
         if (message.embeds and message.author.id == dank_userid and
                 message.embeds[0].description and
@@ -239,6 +304,7 @@ def create_eggs_bot():
                             desc.startswith("The correct answer was") or
                             desc.startswith("> You typed")):
                         message_guild_storage.pop(message.guild.id, None)
+                await dank_refresh_message(message)
 
     @bot.event
     async def on_reaction_add(reaction, user):
