@@ -14,6 +14,7 @@ main_pingroleid = config.get("main_pingroleid")
 main_doublepingroleid = config.get("main_doublepingroleid")
 main_bossdoublepingroleid = config.get("main_bossdoublepingroleid")
 main_bosspingroleid = config.get("main_bosspingroleid")
+egg_cooldown = config.get("egg_cooldown")
 
 with open("tokens.json", "r") as f:
     TOKENS = json.load(f)
@@ -62,8 +63,8 @@ def create_eggs_bot():
             expiring_time = int(datetime.now(timezone.utc).timestamp() + 300)
 
             embed = discord.Embed(
-                title="Eggs Event Spawned!",
-                description=f"in {guild.name}, which is owned by <@{ownerid}>\n"
+                title="<a:eggs:1390682527957651508> Eggs Event Spawned!",
+                description=f"> in {guild.name}, which is owned by <@{ownerid}>\n"
                             f"**Expires: <t:{expiring_time}:R>**\n-# Invalid Invite = Event over",
                 color=discord.Color.yellow(),
             )
@@ -80,6 +81,12 @@ def create_eggs_bot():
             print(a)
             return None, None
 
+    async def add_temprole(member, role):
+        await member.add_roles(role, reason= "Eggs Blacklist Temprole")
+        await asyncio.sleep(3600)
+        await member.remove_roles(role, reason="Eggs Blacklist Temprole")
+
+    # noinspection PyAsyncCall
     async def eggs_end(message):
         if (message.embeds and message.author.id == dank_userid and
                 message.embeds[0].description and
@@ -90,9 +97,11 @@ def create_eggs_bot():
                 claim_user = message.reference.resolved.author.id if message.reference.resolved else "No User!"
                 fields = message.embeds[0].fields
                 if fields and "XP" in fields[0].value:
-                    xp_text = "<:reply_arrow:1389942241459703929> User successfully gained XP Multi!"
+                    xp_text = "<:reply_arrow:1389942241459703929> <:xp:1390683570011508907> | 2x XP gained!"
+                    xp=True
                 else:
                     xp_text = "<:reply_arrow:1389942241459703929> Fail!"
+                    xp=False
 
                 embed = discord.Embed(
                     description=f"# Egg Claimed by <@{claim_user}>\n{xp_text}",
@@ -102,6 +111,15 @@ def create_eggs_bot():
                 main_eggschannel = await bot.fetch_channel(eggs_channelid)
                 announce_message = await main_eggschannel.fetch_message(message_id)
                 await announce_message.edit(content="", embed=embed, view=view)
+                if xp and claim_user!="No User!":
+                    guild = await bot.fetch_guild(main_guildid)
+                    role = await guild.fetch_role(egg_cooldown)
+                    member = await guild.fetch_member(claim_user)
+                    if member and role:
+                        asyncio.create_task(add_temprole(member, role))
+                        view = discord.ui.View()
+                        view.add_item(discord.ui.Button(custom_id="x", emoji=discord.PartialEmoji(name="timeout", id=1390671654904139886), style=discord.ButtonStyle.success, label= "Gave that user an egg timeout", disabled=True))
+                        await announce_message.edit(view=view)
 
     async def check_eggsevent(message):
         if (
@@ -140,15 +158,15 @@ def create_eggs_bot():
             perms = message.channel.permissions_for(message.guild.me)
             if perms.kick_members:
                 embed = discord.Embed(
-                    title="Leave Server",
-                    description="The boss event has started in this server. Good luck!\n**If you'd like to automatically leave this server, you can press the button below now. You can always rejoin later if needed.**",
+                    title="<a:exit:1390684169197322340> Leave Server",
+                    description="**If you'd like to automatically leave this server, you can press the button below. You can always rejoin later if needed.**\n"
+                                "## <:reply_arrow:1389942241459703929> Don't forget to run any command to keep the server alive!",
                     color=discord.Color.random(),
                 )
                 view=discord.ui.View()
                 view = view.add_item(discord.ui.Button(label="Leave Server", style=discord.ButtonStyle.danger, custom_id="kick_member"))
                 view = view.add_item(
                     discord.ui.Button(label="Back to Boss Events Channel", style=discord.ButtonStyle.url, url=f"https://discord.com/channels/{main_guildid}/{boss_channelid}"))
-                view = view.add_item(discord.ui.Button(label="RUN A COMMAND PLEASE", custom_id="x", style=discord.ButtonStyle.gray, disabled=True))
                 await message.reply(embed=embed, view=view)
 
             if channel_tosend:
@@ -191,13 +209,17 @@ def create_eggs_bot():
                                     if user.dm_channel is None:
                                         await user.create_dm()
                                     channel = user.dm_channel
+                                    if "XP" in reward:
+                                        thumbnail="https://cdn.discordapp.com/emojis/1104768364603244617.png"
+                                    else:
+                                        thumbnail="https://cdn.discordapp.com/emojis/987157087693975612.png"
 
                                     embed = discord.Embed(
                                         title="Boss Event",
                                         description=f"## Rewards:\n{reward}\n-# in `{message.guild.name}`",
                                         color=discord.Color.green(),
                                     )
-                                    embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/987157087693975612.png")
+                                    embed.set_thumbnail(url=thumbnail)
                                     await channel.send(embed=embed)
                         except (ValueError, discord.Forbidden, discord.HTTPException):
                             continue
@@ -212,7 +234,10 @@ def create_eggs_bot():
                 await eggs_end(message)
                 if message.embeds and message.author.id == dank_userid:
                     desc = message.embeds[0].description or ""
-                    if desc == "Not enough people joined the boss battle..." or desc.endswith("has been defeated!"):
+                    if (desc == "Not enough people joined the boss battle..." or
+                            desc.endswith("has been defeated!") or
+                            desc.startswith("The correct answer was") or
+                            desc.startswith("> You typed")):
                         message_guild_storage.pop(message.guild.id, None)
 
     @bot.event

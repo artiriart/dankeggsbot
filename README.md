@@ -40,8 +40,6 @@ python3 index.py
 
 #### Windows:
 
-Sure! Here's the **same setup but formatted for Windows**, using your original Markdown style:
-
 ---
 
 1. Clone this repo
