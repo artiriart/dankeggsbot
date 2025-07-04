@@ -142,8 +142,8 @@ def create_eggs_bot():
         if message.author.id == dank_userid:
             ref_check = (message.reference and message.reference.resolved
                          and message.reference.resolved.author.id != dank_userid)
-            int_check = (hasattr(message, "interaction") and message.interaction
-                         and message.interaction.user.id != dank_userid)
+            int_check = (message.interaction_metadata
+                         and message.interaction_metadata.user.id != dank_userid)
             if ref_check or int_check:
                 today = date.today()
                 ordinal = today.toordinal()
